@@ -1,0 +1,18 @@
+{
+    "id": "minecraft-datapack-modrinth",
+    "name": "Minecraft Datapack Modrinth",
+    "author": "Cedric Kassen",
+    "version": "1.0.0",
+    "description": "Easily install, update, and manage minecraft datapacks from modrinth",
+    "category": "plugin",
+    "url": "https://github.com/FreshDoktor/Pelican-Minecraft-Datapack-Installer",
+    "update_url": null,
+    "namespace": "CedricKassen\\MinecraftDatapackModrinth",
+    "class": "MinecraftDatapackModrinthPlugin",
+    "panels": [
+        "server"
+    ],
+    "panel_version": null,
+    "api_version": 1,
+    "composer_packages": null
+}
