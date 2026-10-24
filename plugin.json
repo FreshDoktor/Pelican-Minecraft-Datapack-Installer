@@ -1,7 +1,7 @@
 {
     "id": "minecraft-datapack-modrinth",
     "name": "Minecraft Datapack Modrinth",
-    "author": "Cedric Kassen",
+    "author": "Cedric und FreshDoktor",
     "version": "1.0.0",
     "description": "Easily install, update, and manage minecraft datapacks from modrinth",
     "category": "plugin",
