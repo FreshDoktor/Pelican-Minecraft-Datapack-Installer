@@ -20,7 +20,7 @@ The sibling of [Minecraft Modpack Modrinth](https://github.com/FreshDoktor/Pelic
 
 - Pelican Panel with plugin support
 - A Minecraft (Java) egg
-- Optional: the [Minecraft Modrinth](https://github.com/pelican-dev/plugins/tree/main/minecraft-modrinth) and [Minecraft Modpack Modrinth](https://github.com/FreshDoktor/Pelican-Modrinth-Modpack-Installer) plugins, and Minecraft Mods Addon
+- Optional: the [Minecraft Modrinth](https://github.com/pelican-dev/plugins/tree/main/minecraft-modrinth) and [Minecraft Modpack Modrinth](https://github.com/FreshDoktor/Pelican-Modrinth-Modpack-Installer) plugins, and [Minecraft Mods Addon](https://github.com/FreshDoktor/Pelican-Modrinth-Mods-Addon)
 
 Datapacks are part of the game itself, so the loader doesn't matter: Vanilla, Paper, Fabric, Forge and so on all load them.
 
@@ -54,7 +54,7 @@ Datapacks are shown on a page that combines everything from Modrinth in one navi
 
 Only the tabs that fit the server are shown, a server with just one of them names the entry after it. If Minecraft Modrinth is enabled, its "Minecraft Mods" page leaves the navigation, its mods are the _Mods_ tab now. Minecraft Modrinth itself is not modified and can be updated as usual.
 
-With Minecraft Mods Addon enabled too, the _Mods_ tab with _Only show installed_ turned on lists every mod on the server, including the ones uploaded by hand.
+With [Minecraft Mods Addon](https://github.com/FreshDoktor/Pelican-Modrinth-Mods-Addon) enabled too, the _Mods_ tab with _Only show installed_ turned on lists every mod on the server, including the ones uploaded by hand.
 
 None of the plugins depends on another. This plugin, Minecraft Modpack Modrinth and Minecraft Mods Addon each ship the page (`src/ModrinthHub`), the first one enabled hosts it and the others add their tabs. Keep the copies in sync when changing it.
 
