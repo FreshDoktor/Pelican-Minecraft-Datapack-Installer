@@ -2,6 +2,7 @@
 
 namespace CedricKassen\MinecraftDatapackModrinth\Livewire;
 
+use App\Facades\Activity;
 use App\Filament\Server\Resources\Files\Pages\ListFiles;
 use App\Models\Server;
 use CedricKassen\MinecraftDatapackModrinth\Exceptions\DatapackException;
@@ -359,6 +360,20 @@ class DatapackBrowser extends Component implements HasActions, HasSchemas, HasTa
 
         $dependencies = array_slice($result['installed'], 1);
 
+        $activity = Activity::event("server:datapack.$operation")
+            ->subject($this->getServer())
+            ->property([
+                'name' => $record['title'],
+                'version' => $versionData['version_number'] ?? '',
+            ]);
+
+        if (!empty($dependencies)) {
+            // A string, an array would make the activity log pick the plural of the description.
+            $activity->property('dependencies', implode(', ', $dependencies));
+        }
+
+        $activity->log();
+
         if (!empty($dependencies)) {
             $body .= ' '.trans('minecraft-datapack-modrinth::strings.notifications.dependencies_installed', ['names' => implode(', ', $dependencies)]);
         }
@@ -429,6 +444,12 @@ class DatapackBrowser extends Component implements HasActions, HasSchemas, HasTa
 
                         return;
                     }
+
+                    // The same entry the console writes for a command typed in by hand.
+                    Activity::event('server:console.command')
+                        ->subject($server)
+                        ->property('command', 'reload')
+                        ->log();
 
                     Notification::make()
                         ->title(trans('minecraft-datapack-modrinth::strings.notifications.reload_sent'))
@@ -610,7 +631,7 @@ class DatapackBrowser extends Component implements HasActions, HasSchemas, HasTa
                     ])))
                     ->action(function (array $record) {
                         try {
-                            MinecraftDatapackModrinth::uninstall($this->getServer(), $record['project_id']);
+                            $entry = MinecraftDatapackModrinth::uninstall($this->getServer(), $record['project_id']);
                         } catch (Throwable $exception) {
                             $this->notifyFailure(trans('minecraft-datapack-modrinth::strings.notifications.uninstall_failed'), $exception);
 
@@ -618,6 +639,15 @@ class DatapackBrowser extends Component implements HasActions, HasSchemas, HasTa
                         } finally {
                             $this->forgetInstalledState();
                         }
+
+                        Activity::event('server:datapack.uninstall')
+                            ->subject($this->getServer())
+                            ->property([
+                                'name' => $entry['project_title'],
+                                'version' => $entry['version_number'],
+                                'file' => $entry['filename'],
+                            ])
+                            ->log();
 
                         Notification::make()
                             ->title(trans('minecraft-datapack-modrinth::strings.notifications.uninstall_success'))
@@ -644,6 +674,11 @@ class DatapackBrowser extends Component implements HasActions, HasSchemas, HasTa
                         } finally {
                             $this->forgetInstalledState();
                         }
+
+                        Activity::event('server:datapack.delete')
+                            ->subject($this->getServer())
+                            ->property('file', $record['filename'])
+                            ->log();
 
                         Notification::make()
                             ->title(trans('minecraft-datapack-modrinth::strings.notifications.deleted'))

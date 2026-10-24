@@ -6,7 +6,7 @@
     "description": "Easily install, update, and manage minecraft datapacks from modrinth",
     "category": "plugin",
     "url": "https://github.com/FreshDoktor/Pelican-Minecraft-Datapack-Installer",
-    "update_url": null,
+    "update_url": "https://hub.pelican.dev/plugins/minecraft-datapack-modrinth/update.json",
     "namespace": "CedricKassen\\MinecraftDatapackModrinth",
     "class": "MinecraftDatapackModrinthPlugin",
     "panels": [
