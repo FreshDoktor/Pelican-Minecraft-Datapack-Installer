@@ -1,24 +1,24 @@
 <?php
 
-namespace CedricKassen\MinecraftDatapackModrinth\Filament\Server\Pages;
+namespace CedricKassen\MinecraftDatapackModrinth\Livewire;
 
 use App\Filament\Server\Resources\Files\Pages\ListFiles;
 use App\Models\Server;
-use App\Traits\Filament\BlockAccessInConflict;
 use CedricKassen\MinecraftDatapackModrinth\Exceptions\DatapackException;
 use CedricKassen\MinecraftDatapackModrinth\Facades\MinecraftDatapackModrinth;
 use CedricKassen\MinecraftDatapackModrinth\Services\MinecraftDatapackModrinthService;
 use Exception;
 use Filament\Actions\Action;
-use Filament\Facades\Filament;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Notifications\Notification;
-use Filament\Pages\Page;
-use Filament\Resources\Concerns\HasTabs;
 use Filament\Schemas\Components\EmbeddedTable;
 use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Livewire as LivewireComponent;
 use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -29,28 +29,34 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
+use Livewire\Attributes\Locked;
+use Livewire\Component;
 use Throwable;
 
 /**
  * Browse the datapacks on Modrinth and manage the ones in the datapacks folder of the server's world.
  *
+ * A component of its own, so it can be a tab of the Modrinth page (see DatapacksSection).
+ *
  * @phpstan-import-type InstalledDatapack from MinecraftDatapackModrinthService
  */
-class MinecraftDatapackPage extends Page implements HasTable
+class DatapackBrowser extends Component implements HasActions, HasSchemas, HasTable
 {
-    use BlockAccessInConflict;
-    use HasTabs;
+    use InteractsWithActions;
+    use InteractsWithSchemas;
     use InteractsWithTable;
 
-    public const TAB_ALL = 'all';
+    /** Dispatched once the datapacks folder changed, so the hosting page can refresh its info badges. */
+    public const DATAPACKS_CHANGED_EVENT = 'modrinth-datapacks-changed';
 
-    public const TAB_INSTALLED = 'installed';
+    #[Locked]
+    public int $serverId;
 
-    protected static string|\BackedEnum|null $navigationIcon = 'tabler-packages';
+    /** Only list the datapacks in the datapacks folder instead of searching Modrinth. */
+    #[Locked]
+    public bool $installedOnly = false;
 
-    protected static ?string $slug = 'modrinth_datapacks';
-
-    protected static ?int $navigationSort = 32;
+    protected ?Server $server = null;
 
     /** @var array<int, InstalledDatapack>|null */
     protected ?array $installedDatapacks = null;
@@ -63,59 +69,46 @@ class MinecraftDatapackPage extends Page implements HasTable
     /** @var array<string, array<int, mixed>> Cache for version data by project_id */
     protected array $versionsCache = [];
 
-    public static function canAccess(): bool
+    public static function make(Server $server, bool $installedOnly): LivewireComponent
     {
-        /** @var Server $server */
-        $server = Filament::getTenant();
-
-        return parent::canAccess() && MinecraftDatapackModrinthService::isEnabledForServer($server);
+        return LivewireComponent::make(static::class, [
+            'serverId' => $server->id,
+            'installedOnly' => $installedOnly,
+        ])->key('modrinth-datapacks-'.($installedOnly ? 'installed' : 'all'));
     }
 
-    public static function getNavigationLabel(): string
+    public function mount(int $serverId, bool $installedOnly = false): void
     {
-        return trans('minecraft-datapack-modrinth::strings.minecraft_datapacks');
+        $this->serverId = $serverId;
+        $this->installedOnly = $installedOnly;
+
+        $this->authorizeAccess();
     }
 
-    public static function getModelLabel(): string
+    public function hydrate(): void
     {
-        return static::getNavigationLabel();
+        $this->authorizeAccess();
     }
 
-    public static function getPluralModelLabel(): string
+    /**
+     * Updates of this component don't pass through the page that rendered it, so check again
+     * that the user may still access the server.
+     */
+    protected function authorizeAccess(): void
     {
-        return static::getNavigationLabel();
-    }
+        $server = $this->getServer();
 
-    public function getTitle(): string
-    {
-        return static::getNavigationLabel();
-    }
-
-    public function mount(): void
-    {
-        $this->loadDefaultActiveTab();
-    }
-
-    /** @return array<string, Tab> */
-    public function getTabs(): array
-    {
-        return [
-            self::TAB_ALL => Tab::make(trans('minecraft-datapack-modrinth::strings.page.view_all')),
-            self::TAB_INSTALLED => Tab::make(trans('minecraft-datapack-modrinth::strings.page.view_installed')),
-        ];
+        abort_unless(user()?->canAccessTenant($server) && MinecraftDatapackModrinthService::isEnabledForServer($server), 403);
     }
 
     protected function getServer(): Server
     {
-        /** @var Server $server */
-        $server = Filament::getTenant();
-
-        return $server;
+        return $this->server ??= Server::findOrFail($this->serverId);
     }
 
     protected function isInstalledTab(): bool
     {
-        return $this->activeTab === self::TAB_INSTALLED;
+        return $this->installedOnly;
     }
 
     protected function userCan(string $permission): bool
@@ -203,7 +196,8 @@ class MinecraftDatapackPage extends Page implements HasTable
     }
 
     /**
-     * Drop everything read from the server so the next render reflects what is actually on disk.
+     * Drop everything read from the server so the next render reflects what is actually on disk,
+     * and tell the hosting page so it can refresh its info badges.
      */
     protected function forgetInstalledState(): void
     {
@@ -211,6 +205,8 @@ class MinecraftDatapackPage extends Page implements HasTable
         $this->folderListing = null;
         $this->folderListingLoaded = false;
         $this->versionsCache = [];
+
+        $this->dispatch(self::DATAPACKS_CHANGED_EVENT);
     }
 
     /**
@@ -403,20 +399,25 @@ class MinecraftDatapackPage extends Page implements HasTable
         $this->installVersion($record, $versions[0]);
     }
 
-    protected function getHeaderActions(): array
+    /**
+     * Reload and open folder, shown in the header of the hosting page.
+     *
+     * @return array<Action>
+     */
+    public static function makeHeaderActions(Server $server): array
     {
         return [
-            Action::make('reload')
+            Action::make('datapacks_reload')
                 ->label(trans('minecraft-datapack-modrinth::strings.actions.reload'))
                 ->icon('tabler-reload')
                 ->color('gray')
-                ->visible(fn () => $this->userCan('control.console'))
+                ->visible(fn () => user()?->can('control.console', $server) ?? false)
                 ->requiresConfirmation()
                 ->modalHeading(trans('minecraft-datapack-modrinth::strings.modals.reload_heading'))
                 ->modalDescription(trans('minecraft-datapack-modrinth::strings.modals.reload_description'))
-                ->action(function () {
+                ->action(function () use ($server) {
                     try {
-                        MinecraftDatapackModrinth::reload($this->getServer());
+                        MinecraftDatapackModrinth::reload($server);
                     } catch (Throwable $exception) {
                         report($exception);
 
@@ -434,20 +435,18 @@ class MinecraftDatapackPage extends Page implements HasTable
                         ->success()
                         ->send();
                 }),
-            Action::make('open_folder')
+            Action::make('datapacks_open_folder')
                 ->tooltip(trans('minecraft-datapack-modrinth::strings.page.open_folder'))
                 ->icon('tabler-folder-open')
-                ->url(fn () => ListFiles::getUrl(['path' => MinecraftDatapackModrinth::getDatapackFolder($this->getServer())]), true),
+                ->url(fn () => ListFiles::getUrl(['path' => MinecraftDatapackModrinth::getDatapackFolder($server)]), true),
         ];
     }
 
     /**
-     * Minecraft version, world and number of installed datapacks.
+     * Minecraft version, world and number of installed datapacks. Rendered by the hosting page above its tabs.
      */
-    protected function getInfoGrid(): Grid
+    public static function makeInfoGrid(Server $server): Grid
     {
-        $server = $this->getServer();
-
         return Grid::make(3)
             ->schema([
                 TextEntry::make('minecraft_version')
@@ -461,7 +460,7 @@ class MinecraftDatapackPage extends Page implements HasTable
                     ->badge(),
                 TextEntry::make('installed_datapacks')
                     ->label(trans('minecraft-datapack-modrinth::strings.page.installed_datapacks'))
-                    ->state(fn () => count($this->getInstalledDatapacks()))
+                    ->state(fn () => count(MinecraftDatapackModrinth::getInstalledDatapacks($server)))
                     ->badge(),
             ]);
     }
@@ -470,10 +469,19 @@ class MinecraftDatapackPage extends Page implements HasTable
     {
         return $schema
             ->components([
-                $this->getInfoGrid(),
-                $this->getTabsContentComponent(),
                 EmbeddedTable::make(),
             ]);
+    }
+
+    public function render(): string
+    {
+        return <<<'BLADE'
+            <div class="flex flex-col gap-y-6">
+                {{ $this->content }}
+
+                <x-filament-actions::modals />
+            </div>
+        BLADE;
     }
 
     /**
@@ -500,6 +508,8 @@ class MinecraftDatapackPage extends Page implements HasTable
                 return new LengthAwarePaginator($response['hits'], $response['total_hits'], 20, $page);
             })
             ->paginated([20])
+            // Keep the query string apart from the tables of the other tabs.
+            ->queryStringIdentifier('datapacks')
             ->emptyStateHeading(fn () => $this->isInstalledTab() ? trans('minecraft-datapack-modrinth::strings.page.empty_heading') : null)
             ->emptyStateDescription(fn () => $this->isInstalledTab() ? trans('minecraft-datapack-modrinth::strings.page.empty_description') : null)
             ->columns([

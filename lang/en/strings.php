@@ -2,7 +2,11 @@
 
 return [
     'plugin_name' => 'Modrinth Datapacks',
-    'minecraft_datapacks' => 'Minecraft Datapacks',
+
+    'hub' => [
+        'label' => 'Datapacks',
+        'navigation_label' => 'Modrinth Datapacks',
+    ],
 
     'page' => [
         'open_folder' => 'Open datapacks folder',
@@ -10,13 +14,11 @@ return [
         'world' => 'World',
         'installed_datapacks' => 'Installed Datapacks',
         'unknown' => 'Unknown',
-        'view_all' => 'All',
-        'view_installed' => 'Installed',
         'project_unavailable' => 'This datapack could not be loaded from Modrinth',
         'uploaded_zip' => 'Uploaded by hand',
         'uploaded_folder' => 'Folder uploaded by hand',
         'empty_heading' => 'No datapacks installed',
-        'empty_description' => 'Install datapacks from the All tab or upload them to the datapacks folder of the world.',
+        'empty_description' => 'Turn off "Only show installed" to search Modrinth for datapacks, or upload them to the datapacks folder of the world.',
     ],
 
     'table' => [
