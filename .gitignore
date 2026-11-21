@@ -1,2 +1,5 @@
 # Packaged plugin builds
 *.zip
+
+# IDE settings
+.idea/

@@ -1,0 +1,51 @@
+name: release
+
+on:
+  push:
+    tags:
+      - '*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout tag
+        uses: actions/checkout@v4
+
+      - name: Check plugin.json
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="$(jq -r '.version' plugin.json)"
+          echo "Tag: $TAG, plugin.json version: $VERSION"
+
+          if [ "${TAG#v}" != "$VERSION" ]; then
+            echo "::error::Tag $TAG doesn't match the version $VERSION in plugin.json"
+            exit 1
+          fi
+
+          # The panel writes a meta block on install, it must not be shipped.
+          if jq -e 'has("meta")' plugin.json > /dev/null; then
+            echo "::error::plugin.json contains a meta block, remove it before releasing"
+            exit 1
+          fi
+
+      - name: Build zip
+        run: |
+          # Plugin files at the root of the zip, like the panel expects them.
+          # Files marked export-ignore in .gitattributes (.github, .gitignore, ...) are left out.
+          ZIP="$(jq -r '.id' plugin.json).zip"
+          git archive --format=zip -o "$ZIP" HEAD
+          unzip -l "$ZIP"
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" ./*.zip --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" ./*.zip --title "$GITHUB_REF_NAME" --generate-notes --verify-tag
+          fi
