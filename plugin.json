@@ -2,7 +2,7 @@
     "id": "minecraft-datapack-modrinth",
     "name": "Minecraft Datapack Installer",
     "author": "Cedric und FreshDoktor",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "Easily install, update, and manage minecraft datapacks from modrinth",
     "category": "plugin",
     "url": "https://github.com/FreshDoktor/Pelican-Minecraft-Datapack-Installer",

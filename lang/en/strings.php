@@ -75,7 +75,7 @@ return [
         'delete_heading' => 'Delete :file',
         'delete_description' => 'This permanently deletes :file from the datapacks folder.',
         'reload_heading' => 'Reload Datapacks',
-        'reload_description' => 'Sends /reload to the server console, so the running server loads its datapacks again. Datapacks that change world generation or add dimensions need a restart instead.',
+        'reload_description' => 'Sends /reload to the server console, so the running server loads its datapacks again. Datapacks that add new enchantments, change world generation or add dimensions need a restart instead.',
         'reload_hint' => 'Datapacks take effect after /reload or a restart of the server. World generation only changes in chunks generated afterwards.',
     ],
 
@@ -95,7 +95,7 @@ return [
         'dependencies_installed' => 'Required datapacks installed along with it: :names.',
         'dependencies_missing' => 'Required datapacks missing',
         'dependencies_missing_body' => 'These required datapacks could not be installed and have to be added by hand: :names',
-        'reload_hint' => 'Run /reload or restart the server to apply the change.',
+        'reload_hint' => 'Run /reload or restart the server to apply the change. Some datapacks, e.g. ones that add new enchantments, need a server restart, /reload is not enough for them.',
         'reload_sent' => 'Datapacks are being reloaded',
         'reload_failed' => 'Reloading failed, is the server running?',
     ],

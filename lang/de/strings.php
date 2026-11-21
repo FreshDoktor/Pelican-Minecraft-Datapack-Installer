@@ -75,7 +75,7 @@ return [
         'delete_heading' => ':file löschen',
         'delete_description' => 'Löscht :file endgültig aus dem Datapack-Ordner.',
         'reload_heading' => 'Datapacks neu laden',
-        'reload_description' => 'Sendet /reload an die Server-Konsole, damit der laufende Server seine Datapacks neu lädt. Datapacks, die die Weltgenerierung ändern oder Dimensionen hinzufügen, benötigen stattdessen einen Neustart.',
+        'reload_description' => 'Sendet /reload an die Server-Konsole, damit der laufende Server seine Datapacks neu lädt. Datapacks, die neue Verzauberungen hinzufügen, die Weltgenerierung ändern oder Dimensionen hinzufügen, benötigen stattdessen einen Neustart.',
         'reload_hint' => 'Datapacks werden erst nach /reload oder einem Neustart des Servers aktiv. Die Weltgenerierung ändert sich nur in danach erzeugten Chunks.',
     ],
 
@@ -95,7 +95,7 @@ return [
         'dependencies_installed' => 'Mitinstallierte benötigte Datapacks: :names.',
         'dependencies_missing' => 'Benötigte Datapacks fehlen',
         'dependencies_missing_body' => 'Diese benötigten Datapacks konnten nicht installiert werden und müssen manuell hinzugefügt werden: :names',
-        'reload_hint' => 'Führe /reload aus oder starte den Server neu, um die Änderung zu übernehmen.',
+        'reload_hint' => 'Führe /reload aus oder starte den Server neu, um die Änderung zu übernehmen. Manche Datapacks, z. B. solche mit neuen Verzauberungen, brauchen einen Neustart des Servers, /reload reicht dafür nicht.',
         'reload_sent' => 'Datapacks werden neu geladen',
         'reload_failed' => 'Neu laden fehlgeschlagen, läuft der Server?',
     ],

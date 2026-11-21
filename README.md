@@ -62,7 +62,7 @@ None of the plugins depends on another. This plugin, Minecraft Modpack Modrinth 
 
 Unlike modpacks, a datapack is a single small file, so installing runs right away, no queue worker is needed.
 
-Datapacks take effect after `/reload` or a restart. Datapacks that change world generation (e.g. Terralith) only affect chunks generated afterwards, install them before the world is created to get the full effect.
+Datapacks take effect after `/reload` or a restart. Some datapacks, e.g. ones that add new enchantments, only load on a server restart, `/reload` is not enough for them. The install message says so. Datapacks that change world generation (e.g. Terralith) only affect chunks generated afterwards, install them before the world is created to get the full effect.
 
 ## Permissions
 
